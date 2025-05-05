@@ -1,6 +1,7 @@
+// src/core/router.js
 import { store } from './state.js';
 
-class Router {
+export class Router {
   constructor() {
     this.routes = [];
     this.currentRoute = null;
@@ -22,7 +23,7 @@ class Router {
   handleRouteChange() {
     const path = window.location.pathname;
     const route = this.routes.find(route => {
-      // Simple path matching (can be expanded for parameters)
+      // Simple path matching
       if (route.path === path) return true;
       
       // Support for pattern matching
@@ -60,24 +61,13 @@ class Router {
           params: route.params || {}
         }
       });
-      
-      // Render the component
-      const rootElement = document.querySelector('#app');
-      if (rootElement) {
-        rootElement.innerHTML = '';
-        const component = typeof route.component === 'function' 
-          ? route.component()
-          : route.component;
-        rootElement.appendChild(component);
-      }
     }
   }
 
   init() {
     this.handleRouteChange();
+    return this;
   }
 }
 
-const router = new Router();
-
-export { Router, router };
+export const router = new Router();

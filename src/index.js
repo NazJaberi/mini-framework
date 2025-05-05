@@ -1,10 +1,11 @@
+// src/index.js
 import { createElement, VNode } from './core/dom.js';
 import { Store, store } from './core/state.js';
 import { EventEmitter, initDOMEvents } from './core/events.js';
 import { Router, router } from './core/router.js';
 
-// Initialize the framework
-function createApp(rootSelector) {
+// Create and initialize the app
+export function createApp(rootSelector) {
   const rootElement = document.querySelector(rootSelector);
   
   if (!rootElement) {
@@ -38,10 +39,10 @@ function createApp(rootSelector) {
 // Export framework API
 export {
   createElement,
-  createApp,
   Store,
   store,
   EventEmitter,
   Router,
-  router
+  router,
+  VNode
 };
