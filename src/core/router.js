@@ -6,8 +6,8 @@ export class Router {
     this.routes = [];
     this.currentRoute = null;
     
-    // Handle browser history navigation
-    window.addEventListener('popstate', () => this.handleRouteChange());
+    // Handle hash changes for routing
+    window.addEventListener('hashchange', () => this.handleRouteChange());
   }
 
   addRoute(path, component) {
@@ -16,15 +16,32 @@ export class Router {
   }
 
   navigate(path) {
-    history.pushState(null, null, path);
-    this.handleRouteChange();
+    // For hash-based routing, we can directly set location.hash
+    if (path.startsWith('/#/')) {
+      window.location.hash = path.substring(2); // Remove the leading "/#"
+    } else if (path.startsWith('#/')) {
+      window.location.hash = path.substring(1); // Remove the leading "#"
+    } else if (path === '/') {
+      window.location.hash = '';
+    } else {
+      // For regular paths, use history API
+      history.pushState(null, null, path);
+      this.handleRouteChange();
+    }
   }
 
   handleRouteChange() {
-    const path = window.location.pathname;
+    // Get current path (support both regular paths and hash-based paths)
+    const path = window.location.hash 
+      ? `/#${window.location.hash}`  // Convert "#/active" to "/#/active"
+      : window.location.pathname;
+
     const route = this.routes.find(route => {
       // Simple path matching
       if (route.path === path) return true;
+      
+      // For hash paths like "/#/"
+      if (route.path === '/' && (path === '/#/' || path === '/#')) return true;
       
       // Support for pattern matching
       if (route.path.includes(':')) {
@@ -61,6 +78,11 @@ export class Router {
           params: route.params || {}
         }
       });
+
+      // Call the component function if it exists
+      if (typeof route.component === 'function') {
+        route.component();
+      }
     }
   }
 
