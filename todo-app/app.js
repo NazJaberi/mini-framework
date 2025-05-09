@@ -1,10 +1,10 @@
-import { createApp, createElement, store, router } from '../src/index.js';
+import { createApp, createElement, store, router, createEditableElement } from '../src/index.js';
 
 // Initialize the app state
 store.setState({
   todos: [],
-  filter: 'all', 
-  editing: null 
+  filter: 'all'
+  // Note: We don't need editing state here anymore as it's handled by the framework
 });
 
 // Event handlers
@@ -56,35 +56,21 @@ function toggleAll(e) {
   });
 }
 
-function startEditing(id) {
-  store.setState({ editing: id });
-}
-
-function updateTodoText(id, text) {
+function updateTodoText(id, newText) {
   const { todos } = store.getState();
   
-  if (text.trim() === '') {
+  if (newText.trim() === '') {
     // If the text is empty, remove the todo
     store.setState({
-      todos: todos.filter(todo => todo.id !== id),
-      editing: null
+      todos: todos.filter(todo => todo.id !== id)
     });
   } else {
     // Otherwise update the text
     store.setState({
       todos: todos.map(todo => 
-        todo.id === id ? { ...todo, text } : todo
-      ),
-      editing: null
+        todo.id === id ? { ...todo, text: newText } : todo
+      )
     });
-  }
-}
-
-function handleEditKeyDown(e, id) {
-  if (e.key === 'Enter') {
-    updateTodoText(id, e.target.value);
-  } else if (e.key === 'Escape') {
-    store.setState({ editing: null });
   }
 }
 
@@ -95,40 +81,6 @@ function setFilter(filter) {
 
 // Components
 function TodoItem(todo) {
-  const { editing } = store.getState();
-  const isEditing = editing === todo.id;
-  
-  if (isEditing) {
-    return createElement('li', { 
-      class: 'editing',
-      key: todo.id 
-    }, 
-      createElement('div', { class: 'view' },
-        createElement('input', { 
-          class: 'toggle', 
-          type: 'checkbox', 
-          checked: todo.completed,
-          onclick: () => toggleTodo(todo.id)
-        }),
-        createElement('label', { 
-          ondblclick: () => startEditing(todo.id)
-        }, todo.text),
-        createElement('button', { 
-          class: 'destroy', 
-          onclick: () => removeTodo(todo.id)
-        })
-      ),
-      createElement('input', {
-        class: 'edit',
-        value: todo.text,
-        // Use autofocus to focus the input when it's rendered
-        autofocus: true,
-        onblur: (e) => updateTodoText(todo.id, e.target.value),
-        onkeydown: (e) => handleEditKeyDown(e, todo.id)
-      })
-    );
-  }
-  
   return createElement('li', { 
     class: todo.completed ? 'completed' : '',
     key: todo.id 
@@ -140,9 +92,15 @@ function TodoItem(todo) {
         checked: todo.completed,
         onclick: () => toggleTodo(todo.id)
       }),
-      createElement('label', { 
-        ondblclick: () => startEditing(todo.id)
-      }, todo.text),
+      // Using the framework's createEditableElement function
+      createEditableElement(
+        todo.text, 
+        (newText) => updateTodoText(todo.id, newText),
+        { 
+          class: 'todo-label',
+          id: `todo-${todo.id}` 
+        }
+      ),
       createElement('button', { 
         class: 'destroy', 
         onclick: () => removeTodo(todo.id)

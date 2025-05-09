@@ -3,6 +3,7 @@ import { createElement, VNode } from './core/dom.js';
 import { Store, store } from './core/state.js';
 import { EventEmitter, initDOMEvents } from './core/events.js';
 import { Router, router } from './core/router.js';
+import { createEditableElement } from './core/editable.js';
 
 // Create and initialize the app
 export function createApp(rootSelector) {
@@ -44,5 +45,6 @@ export {
   EventEmitter,
   Router,
   router,
-  VNode
+  VNode,
+  createEditableElement
 };
