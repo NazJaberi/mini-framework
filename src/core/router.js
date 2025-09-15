@@ -5,6 +5,8 @@ export class Router {
   constructor() {
     this.routes = [];
     this.currentRoute = null;
+    this.notFoundComponent = null;
+    this.errorComponent = null;
     
     // Handle hash changes for routing
     window.addEventListener('hashchange', () => this.handleRouteChange());
@@ -33,7 +35,7 @@ export class Router {
   handleRouteChange() {
     // Get current path (support both regular paths and hash-based paths)
     const path = window.location.hash 
-      ? `/#${window.location.hash}`  // Convert "#/active" to "/#/active"
+      ? `/#${window.location.hash.slice(1)}`  // Convert "#/active" to "/#/active" correctly
       : window.location.pathname;
 
     const route = this.routes.find(route => {
@@ -70,24 +72,65 @@ export class Router {
     
     if (route) {
       this.currentRoute = route;
-      
-      // Update state with route information
-      store.setState({ 
+      try {
+        // Update state with route information
+        store.setState({ 
+          route: {
+            path,
+            params: route.params || {},
+            notFound: false,
+            error: null
+          }
+        });
+
+        // Call the component function if it exists
+        if (typeof route.component === 'function') {
+          route.component();
+        }
+      } catch (err) {
+        // Update state with error information
+        store.setState({
+          route: {
+            path,
+            params: route.params || {},
+            notFound: false,
+            error: err
+          }
+        });
+        if (typeof this.errorComponent === 'function') {
+          this.errorComponent(err);
+        }
+      }
+    } else {
+      // No matching route → mark as notFound
+      store.setState({
         route: {
           path,
-          params: route.params || {}
+          params: {},
+          notFound: true,
+          error: null
         }
       });
-
-      // Call the component function if it exists
-      if (typeof route.component === 'function') {
-        route.component();
+      if (typeof this.notFoundComponent === 'function') {
+        this.notFoundComponent({ path });
       }
     }
   }
 
   init() {
     this.handleRouteChange();
+    return this;
+  }
+
+  // Set a component (callback) to run when no route matches
+  setNotFound(component) {
+    this.notFoundComponent = component;
+    return this;
+  }
+
+  // Set a component (callback) to run when a route component throws
+  setError(component) {
+    this.errorComponent = component;
     return this;
   }
 }

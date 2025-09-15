@@ -193,6 +193,48 @@ function TodoApp() {
   );
 }
 
+// Error and Not Found pages
+function NotFoundPage() {
+  return createElement('section', { class: 'todoapp' },
+    createElement('header', { class: 'header' },
+      createElement('h1', {}, 'Not Found')
+    ),
+    createElement('div', { class: 'main' },
+      createElement('p', { style: { padding: '16px' } }, 'The page you requested was not found.'),
+      createElement('p', { style: { padding: '0 16px 16px' } },
+        createElement('a', { href: '#/', onclick: (e) => { e.preventDefault(); setFilter('all'); } }, 'Go back to Todos')
+      )
+    )
+  );
+}
+
+function ErrorPage(error) {
+  const message = (error && error.message) ? error.message : 'An unexpected error occurred.';
+  return createElement('section', { class: 'todoapp' },
+    createElement('header', { class: 'header' },
+      createElement('h1', {}, 'Error')
+    ),
+    createElement('div', { class: 'main' },
+      createElement('p', { style: { padding: '16px', color: '#F44336' } }, message),
+      createElement('p', { style: { padding: '0 16px 16px' } },
+        createElement('a', { href: '#/', onclick: (e) => { e.preventDefault(); setFilter('all'); } }, 'Go back to Todos')
+      )
+    )
+  );
+}
+
+// Root component that decides which page to render
+function Root() {
+  const { route } = store.getState();
+  if (route && route.error) {
+    return ErrorPage(route.error);
+  }
+  if (route && route.notFound) {
+    return NotFoundPage();
+  }
+  return TodoApp();
+}
+
 // Create and mount the app
 const app = createApp('#app');
 
@@ -213,7 +255,10 @@ router.addRoute('/#/completed', () => {
 });
 
 // Initialize the router
-router.init();
+router
+  .setNotFound(() => { /* state already updated; Root will render NotFound */ })
+  .setError(() => { /* state already updated; Root will render Error */ })
+  .init();
 
 // Check the initial route
 const path = window.location.hash;
@@ -227,7 +272,7 @@ if (path === '#/active') {
 
 // Render function
 function render() {
-  app.mount(TodoApp());
+  app.mount(Root());
 }
 
 // Subscribe to state changes
