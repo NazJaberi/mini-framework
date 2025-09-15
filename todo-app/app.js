@@ -1,10 +1,42 @@
 import { createApp, createElement, store, router, createEditableElement } from '../src/index.js';
 
-// Initialize the app state
-store.setState({
-  todos: [],
-  filter: 'all'
-});
+// --- Persistence (localStorage) ---
+const STORAGE_KEY = 'mini-framework-todos';
+
+function loadPersisted() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Only accept expected shapes
+    return {
+      todos: Array.isArray(parsed.todos) ? parsed.todos : [],
+      filter: typeof parsed.filter === 'string' ? parsed.filter : 'all'
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function persistState(state) {
+  try {
+    const toSave = {
+      todos: Array.isArray(state.todos) ? state.todos : [],
+      filter: typeof state.filter === 'string' ? state.filter : 'all'
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  } catch (_) {
+    // Ignore storage errors (quota/private mode)
+  }
+}
+
+// Initialize the app state (hydrate from storage if present)
+const saved = loadPersisted();
+if (saved) {
+  store.setState({ todos: saved.todos, filter: saved.filter });
+} else {
+  store.setState({ todos: [], filter: 'all' });
+}
 
 // Event handlers
 function addTodo(e) {
@@ -276,7 +308,12 @@ function render() {
 }
 
 // Subscribe to state changes
-store.subscribe(render);
+store.subscribe((s) => {
+  // Persist only todos and filter
+  persistState(s);
+  // Re-render UI
+  render();
+});
 
 // Initial render
 render();
