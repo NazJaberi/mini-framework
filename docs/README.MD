@@ -228,7 +228,7 @@ Here's a complete example of a simple todo app using all features of SimpleDom:
 ```javascript
 import { createApp, createElement, store } from './src/index.js';
 
-// Initialize state
+// Initialize stateh
 store.setState({
   todos: [],
   newTodo: ''

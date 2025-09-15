@@ -4,7 +4,6 @@ import { createApp, createElement, store, router, createEditableElement } from '
 store.setState({
   todos: [],
   filter: 'all'
-  // Note: We don't need editing state here anymore as it's handled by the framework
 });
 
 // Event handlers
