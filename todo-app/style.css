@@ -403,3 +403,8 @@ html .clear-completed:active {
   text-decoration: underline;
   color: #999;
 }
+
+/* Blank canvas page for routes that render no view */
+.blank-canvas {
+  min-height: 200px;
+}

@@ -264,6 +264,14 @@ function Root() {
   if (route && route.notFound) {
     return NotFoundPage();
   }
+  if (route && route.view != null) {
+    // If a route returned an explicit view (VNode/Node/string), render it
+    return route.view;
+  }
+  if (route && route.noView) {
+    // Intentionally render a blank canvas when a route does not render a view
+    return createElement('div', { class: 'blank-canvas' });
+  }
   return TodoApp();
 }
 
@@ -273,17 +281,21 @@ const app = createApp('#app');
 // Setup routes
 router.addRoute('/', () => {
   setFilter('all');
-  return null;
+  return true; // indicates a normal route with a view (Root will render TodoApp)
 });
 
 router.addRoute('/#/active', () => {
   setFilter('active');
-  return null;
+  return true; // normal view
 });
 
 router.addRoute('/#/completed', () => {
   setFilter('completed');
-  return null;
+  return true; // normal view
+});
+
+router.addRoute('/#/test', () => {
+  return createElement('div', { class: 'blank-canvas', style: { padding: '24px' } }, 'Hello world');
 });
 
 // Initialize the router
@@ -292,14 +304,14 @@ router
   .setError(() => { /* state already updated; Root will render Error */ })
   .init();
 
-// Check the initial route
-const path = window.location.hash;
-if (path === '#/active') {
-  setFilter('active');
-} else if (path === '#/completed') {
-  setFilter('completed');
-} else {
+// Check the initial route without overriding unknown routes
+const hash = window.location.hash;
+if (hash === '#/' || hash === '') {
   setFilter('all');
+} else if (hash === '#/active') {
+  setFilter('active');
+} else if (hash === '#/completed') {
+  setFilter('completed');
 }
 
 // Render function

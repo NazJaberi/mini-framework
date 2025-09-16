@@ -33,7 +33,7 @@ export class VNode {
     // Add children
     this.children.forEach(child => {
       if (child === null || child === undefined) {
-        return; // Skip null or undefined children
+        return; // Skip null or undefined childrena
       }
       
       if (typeof child === 'string' || typeof child === 'number') {

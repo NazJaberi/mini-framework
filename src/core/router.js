@@ -1,5 +1,6 @@
 // src/core/router.js
 import { store } from './state.js';
+import { VNode } from './dom.js';
 
 export class Router {
   constructor() {
@@ -15,6 +16,16 @@ export class Router {
   addRoute(path, component) {
     this.routes.push({ path, component });
     return this;
+  }
+
+  // Convenience: register a route that intentionally renders nothing (blank canvas)
+  addBlank(path) {
+    return this.addRoute(path, () => null);
+  }
+
+  // Convenience: provide a blank component factory for explicit use
+  blank() {
+    return () => null;
   }
 
   navigate(path) {
@@ -73,20 +84,31 @@ export class Router {
     if (route) {
       this.currentRoute = route;
       try {
-        // Update state with route information
+        // Call the component function if it exists and capture its result
+        let result;
+        if (typeof route.component === 'function') {
+          result = route.component();
+        }
+
+        // Determine if the route returned a view (VNode/Node/string/number)
+        const hasView = (
+          result instanceof VNode ||
+          (typeof Node !== 'undefined' && result instanceof Node) ||
+          typeof result === 'string' ||
+          typeof result === 'number'
+        );
+
+        // Update state with route information and whether the route rendered a view
         store.setState({ 
           route: {
             path,
             params: route.params || {},
             notFound: false,
-            error: null
+            error: null,
+            noView: result == null, // null or undefined => treat as blank page
+            view: hasView ? result : null
           }
         });
-
-        // Call the component function if it exists
-        if (typeof route.component === 'function') {
-          route.component();
-        }
       } catch (err) {
         // Update state with error information
         store.setState({
@@ -94,7 +116,9 @@ export class Router {
             path,
             params: route.params || {},
             notFound: false,
-            error: err
+            error: err,
+            noView: false,
+            view: null
           }
         });
         if (typeof this.errorComponent === 'function') {
@@ -108,7 +132,9 @@ export class Router {
           path,
           params: {},
           notFound: true,
-          error: null
+          error: null,
+          noView: false,
+          view: null
         }
       });
       if (typeof this.notFoundComponent === 'function') {
